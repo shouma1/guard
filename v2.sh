@@ -1,0 +1,17 @@
+#!/bin/bash
+
+VPS1_PUBLIC_IP="0.0.0.0"
+VPS1_PRIVATE_IP="0.0.0.0"
+VPS2_PRIVATE_IP="0.0.0.0"
+
+VPS1_WG_PORT="12345"
+VPS2_WG_PORT="23456"
+
+VPS1_PUBLIC_KEY="dB32qChH3lrYoSc8pinvfBCXoI19Q71BIxEA1HX8JVM="
+VPS2_PRIVATE_KEY="YCcQ+VQptAI8DcFKr1BU6g7L56j+E94UEsSbp5gWxmg="
+
+apt-get update
+apt-get install -y wireguard
+echo -e "[Interface]\nAddress = $VPS2_PRIVATE_IP/24\nPrivateKey = $VPS2_PRIVATE_KEY\nListenPort = $VPS2_WG_PORT\n\n[Peer]\nPublicKey = $VPS1_PUBLIC_KEY\nAllowedIPs = $VPS1_PRIVATE_IP/32\nEndpoint = $VPS1_PUBLIC_IP:$VPS1_WG_PORT" > /etc/wireguard/wg0.conf
+systemctl enable wg-quick@wg0
+systemctl start wg-quick@wg0
