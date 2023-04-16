@@ -1,0 +1,20 @@
+#!/bin/bash
+
+VPS1_PRIVATE_IP="10.0.0."
+VPS2_PUBLIC_IP="106.161.."
+VPS2_PRIVATE_IP="10.0.1."
+
+VPS1_WG_PORT="12345"
+VPS2_WG_PORT="23456"
+
+VPS1_PRIVATE_KEY="<1号VPS的私钥>"
+VPS1_PUBLIC_KEY="<1号VPS的公钥>"
+VPS2_PUBLIC_KEY="<2号VPS的公钥>"
+
+apt-get update
+apt-get install -y wireguard iptables
+echo -e "[Interface]\nAddress = $VPS1_PRIVATE_IP/24\nPrivateKey = $VPS1_PRIVATE_KEY\nListenPort = $VPS1_WG_PORT\n\n[Peer]\nPublicKey = $VPS2_PUBLIC_KEY\nAllowedIPs = $VPS2_PRIVATE_IP/32\nEndpoint = $VPS2_PUBLIC_IP:$VPS2_WG_PORT" > /etc/wireguard/wg0.conf
+systemctl enable wg-quick@wg0
+systemctl start wg-quick@wg0
+iptables -t nat -A PREROUTING -p udp --dport $VPS1_WG_PORT -j DNAT --to-destination $VPS2_PRIVATE_IP:$VPS2_WG_PORT
+iptables -t nat -A POSTROUTING -p udp -d $VPS2_PRIVATE_IP --dport $VPS2_WG_PORT -j SNAT --to-source $VPS1_PRIVATE_IP
